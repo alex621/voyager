@@ -94,7 +94,9 @@ abstract class Controller extends BaseController
 
                 // If the image upload is null and it has a current image keep the current image
                 if ($row->type == 'image' && is_null($request->input($row->field)) && isset($data->{$row->field})) {
-                    $content = $data->{$row->field};
+                    // $content = $data->{$row->field};
+                    //keith changed
+                    $content = $data->getRawOriginal($row->field);
                 }
 
                 // If the multiple_images upload is null and it has a current image keep the current image
@@ -168,10 +170,10 @@ abstract class Controller extends BaseController
                 $data->{$row->field} = str_replace($uuid, $data->getKey(), $data->{$row->field});
             });
             $data->save();
-            if ($old_path != $new_path && 
-                !Storage::disk(config('voyager.storage.disk'))->exists($new_path) && 
+            if ($old_path != $new_path &&
+                !Storage::disk(config('voyager.storage.disk'))->exists($new_path) &&
                 Storage::disk(config('voyager.storage.disk'))->exists($old_path)
-                ) 
+                )
             {
                 $request->session()->forget([$slug.'_path', $slug.'_uuid']);
                 Storage::disk(config('voyager.storage.disk'))->move($old_path, $new_path);

@@ -13,14 +13,36 @@ class Image extends BaseType
     {
         if ($this->request->hasFile($this->row->field)) {
             $file = $this->request->file($this->row->field);
+            //Keith Changed
+            if($this->slug == "sets" || $this->slug == "promotions"){
 
-            $path = $this->slug.DIRECTORY_SEPARATOR.date('FY').DIRECTORY_SEPARATOR;
+              $path = $this->slug.DIRECTORY_SEPARATOR."images".DIRECTORY_SEPARATOR.date('FY').DIRECTORY_SEPARATOR;
 
-            $filename = $this->generateFileName($file, $path);
+              $filename = $this->generateFileName($file, $path);
 
-            $image = InterventionImage::make($file)->orientate();
+              $image = InterventionImage::make($file)->orientate();
 
-            $fullPath = $path.$filename.'.'.$file->getClientOriginalExtension();
+              $fullPath = $path.$filename.'.'.$file->getClientOriginalExtension();
+              $returnPath = date('FY').DIRECTORY_SEPARATOR.$filename.'.'.$file->getClientOriginalExtension();
+            }else if($this->slug == "restaurants-new" || $this->slug == "restaurants"){
+              $path = "restaurants".DIRECTORY_SEPARATOR."banner_image".DIRECTORY_SEPARATOR.date('FY').DIRECTORY_SEPARATOR;
+
+              $filename = $this->generateFileName($file, $path);
+
+              $image = InterventionImage::make($file)->orientate();
+
+              $fullPath = $path.$filename.'.'.$file->getClientOriginalExtension();
+              $returnPath = date('FY').DIRECTORY_SEPARATOR.$filename.'.'.$file->getClientOriginalExtension();
+            }else{
+              $path = $this->slug.DIRECTORY_SEPARATOR.date('FY').DIRECTORY_SEPARATOR;
+
+              $filename = $this->generateFileName($file, $path);
+
+              $image = InterventionImage::make($file)->orientate();
+
+              $fullPath = $path.$filename.'.'.$file->getClientOriginalExtension();
+              $returnPath = $fullPath;
+            }
 
             $resize_width = null;
             $resize_height = null;
@@ -49,7 +71,7 @@ class Image extends BaseType
                         $constraint->upsize();
                     }
                 }
-            )->encode($file->getClientOriginalExtension(), $resize_quality);
+            )->encode("jpg", $resize_quality);
 
             if ($this->is_animated_gif($file)) {
                 Storage::disk(config('voyager.storage.disk'))->put($fullPath, file_get_contents($file), 'public');
@@ -103,7 +125,7 @@ class Image extends BaseType
                 }
             }
 
-            return $fullPath;
+            return $returnPath;
         }
     }
 

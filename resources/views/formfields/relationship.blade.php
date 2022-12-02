@@ -1,3 +1,6 @@
+@php
+//echo json_encode($options);
+@endphp
 @if(isset($options->model) && isset($options->type))
 
     @if(class_exists($options->model))
@@ -6,12 +9,11 @@
 
         @if($options->type == 'belongsTo')
 
-            @if(isset($view) && ($view == 'browse' || $view == 'read'))
-
+            @if(isset($view) && ($view == 'browse' || $view == 'read') && empty($options->need_select))
                 @php
                     $relationshipData = (isset($data)) ? $data : $dataTypeContent;
                     $model = app($options->model);
-                    $query = $model::where($options->key,$relationshipData->{$options->column})->first();
+                    $query = $model::where($options->key,$relationshipData->{$options->column} ?? null)->first();
                 @endphp
 
                 @if(isset($query))
@@ -19,9 +21,42 @@
                 @else
                     <p>{{ __('voyager::generic.no_results') }}</p>
                 @endif
+            @elseif(!empty($options->need_select))
+                @php
+                foreach($dataType->browseRows as $k => $v)
+                {
+                    if($v->details && !empty($v->details->column) && !empty($v->field) && $v->details->column == $options->column && $v->details->label == $options->label)
+                    {
+                        $selectField = $v->field;
+                    }
+                }
+                @endphp
+                <div class="relationship-select-container" style="display: none;" select-container-name="{{ $selectField }}">
+                    <select
+                        class="form-control select2-ajax" data-rel-name="{{ $selectField }}" data-name="{{ $options->column }}"
+                        data-get-items-route="{{route('voyager.' . $dataType->slug.'.relation')}}"
+                        data-get-items-field="{{$selectField}}"
+                        @if(!is_null($options->key)) data-id="{{$options->key}}" @endif
+                        data-method="add"
+                        @if($row->required == 1) required @endif
+                    >
+                        @php
+                            $model = app($options->model);
+                            $query = $model::get();
+                        @endphp
+
+                        @if(!$row->required)
+                            <option value="">{{__('voyager::generic.none')}}</option>
+                        @endif
+
+                        @foreach($query as $relationshipData)
+                            <option value="{{ $relationshipData->{$options->label} }}"
+                              >{{ $relationshipData->{$options->label} }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
             @else
-
                 <select
                     class="form-control select2-ajax" name="{{ $options->column }}"
                     data-get-items-route="{{route('voyager.' . $dataType->slug.'.relation')}}"
@@ -169,7 +204,7 @@
 
                         @php
                             $selected_keys = [];
-                            
+
                             if (!is_null($dataTypeContent->getKey())) {
                                 $selected_keys = $dataTypeContent->belongsToMany(
                                     $options->model,

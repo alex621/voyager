@@ -52,6 +52,7 @@ class VoyagerBaseController extends Controller
             $searchNames = $dataType->browseRows->mapWithKeys(function ($row) {
                 return [$row['field'] => $row->getTranslatedAttribute('display_name')];
             });
+
         }
 
         $orderBy = $request->get('order_by', $dataType->order_column);
@@ -88,6 +89,7 @@ class VoyagerBaseController extends Controller
 
                 $searchField = $dataType->name.'.'.$search->key;
                 if ($row = $this->findSearchableRelationshipRow($dataType->rows->where('type', 'relationship'), $search->key)) {
+                    $searchField = $dataType->name.'.'.$row->details->column;
                     $query->whereIn(
                         $searchField,
                         $row->details->model::where($row->details->label, $search_filter, $search_value)->pluck('id')->toArray()
@@ -906,7 +908,7 @@ class VoyagerBaseController extends Controller
                 // If search query, use LIKE to filter results depending on field label
                 if ($search) {
                     // If we are using additional_attribute as label
-                    if (in_array($options->label, $additional_attributes)) {
+                    if (in_array($options->label, $model->additional_attributes ?? [])) {
                         $relationshipOptions = $model->get();
                         $relationshipOptions = $relationshipOptions->filter(function ($model) use ($search, $options) {
                             return stripos($model->{$options->label}, $search) !== false;
@@ -965,7 +967,7 @@ class VoyagerBaseController extends Controller
     protected function findSearchableRelationshipRow($relationshipRows, $searchKey)
     {
         return $relationshipRows->filter(function ($item) use ($searchKey) {
-            if ($item->details->column != $searchKey) {
+            if ($item->field != $searchKey) {
                 return false;
             }
             if ($item->details->type != 'belongsTo') {

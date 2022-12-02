@@ -1,4 +1,4 @@
-@if(isset($dataTypeContent->{$row->field}))
+@if(!empty($dataTypeContent->{$row->field}))
     <div data-field-name="{{ $row->field }}">
         <a href="#" class="voyager-x remove-single-image" style="position:absolute;"></a>
         <img src="@if( !filter_var($dataTypeContent->{$row->field}, FILTER_VALIDATE_URL)){{ Voyager::image( $dataTypeContent->{$row->field} ) }}@else{{ $dataTypeContent->{$row->field} }}@endif"
